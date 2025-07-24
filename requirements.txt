@@ -1,4 +1,4 @@
 flask 
-flask_corn
+flask_cors
 gunicorn
 pymongo
