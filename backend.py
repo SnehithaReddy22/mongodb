@@ -2,16 +2,18 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Connect to local MongoDB instance
-client = MongoClient("mongodb://localhost:27017")
+# Connect to MongoDB using environment variable or fallback to localhost
+mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
+client = MongoClient(mongo_uri)
 db = client["userdb"]
 collection = db["users"]
 
-# Helper: Convert MongoDB ObjectId to string without modifying original
+# Helper: Convert ObjectId to string
 def serialize_user(user):
     return {
         "_id": str(user["_id"]),
@@ -19,14 +21,14 @@ def serialize_user(user):
         "email": user.get("email", "")
     }
 
-# Route: Get all users
+# Get all users
 @app.route('/get_data', methods=['GET'])
 def get_data():
     users = list(collection.find())
     users = [serialize_user(user) for user in users]
     return jsonify(users), 200
 
-# Route: Add a new user
+# Add new user
 @app.route('/add_data', methods=['POST'])
 def add_data():
     user = request.get_json()
@@ -39,7 +41,7 @@ def add_data():
         "id": str(result.inserted_id)
     }), 201
 
-# Route: Update user by ID
+# Update user by ID
 @app.route('/update_data/<string:user_id>', methods=['PUT'])
 def update_data(user_id):
     updated_user = request.get_json()
@@ -57,7 +59,7 @@ def update_data(user_id):
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
-# Route: Delete user by ID
+# Delete user by ID
 @app.route('/delete_data/<string:user_id>', methods=['DELETE'])
 def delete_data(user_id):
     try:
@@ -68,6 +70,6 @@ def delete_data(user_id):
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 400
 
-# Run the Flask app
+# Run app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
