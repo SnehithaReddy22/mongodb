@@ -1,0 +1,4 @@
+flask 
+flask_corn
+gunicorn
+pymongo
